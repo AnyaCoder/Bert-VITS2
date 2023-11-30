@@ -680,9 +680,11 @@ if __name__ == "__main__":
                     with gr.Row():
                         gr.Markdown(
                             """
+                        ### 为了后续步骤中能够方便地自动下载模型，强烈推荐完成这一步骤!
                         ### 去openi官网注册并登录后:
                         ### [点击此处跳转到openi官网](https://openi.pcl.ac.cn/)
                         ### , 点击右上角`个人头像`-> `设置` -> `应用`, 生成令牌(token)
+                        ### 复制token, 粘贴到下面的框框, 点击确认
                         """
                         )
                     with gr.Row():
@@ -1019,7 +1021,8 @@ if __name__ == "__main__":
                                     maximum=20,
                                     value=5,
                                     step=1,
-                                    label="最多保存n个最新模型，超过则删除最早的",
+                                    label="keep_ckpts 最多保存n个最新模型",
+                                    info="若超过，则删除最早的"
                                 )
                             with gr.Row():
                                 slider_log_interval = gr.Slider(
@@ -1055,8 +1058,8 @@ if __name__ == "__main__":
                                 dropdown_version = gr.Dropdown(
                                     label="模型版本选择",
                                     info="推荐使用最新版底模和版本训练",
-                                    choices=["2.0", "1.1.1", "1.1.0", "1.0.1"],
-                                    value="2.0",
+                                    choices=["2.1", "2.0.2", "2.0.1", "2.0", "1.1.1", "1.1.0", "1.0.1"],
+                                    value="2.1",
                                 )
                             with gr.Row():
                                 train_ms_load_btn = gr.Button(
@@ -1124,8 +1127,8 @@ if __name__ == "__main__":
                                 infer_ver_box = gr.Dropdown(
                                     label="更改推理版本",
                                     info="已经实现兼容推理，请选择合适的版本",
-                                    choices=["2.0", "1.1.1", "1.1.0", "1.0.1"],
-                                    value="2.0",
+                                    choices=["2.1", "2.0.2", "2.0.1", "2.0", "1.1.1", "1.1.0", "1.0.1"],
+                                    value="2.1",
                                 )
                             with gr.Row():
                                 radio_webui_share = gr.Radio(
