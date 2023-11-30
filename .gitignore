@@ -175,8 +175,12 @@ data/*
 /bert/*/*.model
 /bert/*/*.safetensors
 /bert/*/*.msgpack
-asr_transcript.py
-extract_list.py
+
+/asr_transcript.py
+/all_process.py
+/clean_list.py
+/extract_list.py
+
 dataset
 /Data
 Model
