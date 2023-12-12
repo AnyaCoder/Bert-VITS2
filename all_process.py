@@ -1196,8 +1196,8 @@ if __name__ == "__main__":
                                 infer_ver_box = gr.Dropdown(
                                     label="更改推理版本",
                                     info="已经实现兼容推理，请选择合适的版本",
-                                    choices=["2.1", "2.0.2", "2.0.1", "2.0", "1.1.1", "1.1.0", "1.0.1"],
-                                    value="2.1",
+                                    choices=["2.2", "2.1", "2.0.2", "2.0.1", "2.0", "1.1.1", "1.1.0", "1.0.1"],
+                                    value="2.2",
                                 )
                             with gr.Row():
                                 radio_webui_share = gr.Radio(
