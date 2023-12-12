@@ -16,7 +16,7 @@ from text import symbols, num_tones, num_languages
 
 class DurationDiscriminator(nn.Module):  # vits2
     def __init__(
-        self, in_channels, filter_channels, kernel_size, p_dropout, gin_channels=0
+            self, in_channels, filter_channels, kernel_size, p_dropout, gin_channels=0
     ):
         super().__init__()
 
