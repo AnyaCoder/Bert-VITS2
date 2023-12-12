@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 import platform
@@ -23,7 +24,7 @@ bert_model_paths = [
 ]
 
 emo_model_paths = [
-    "./emotional/wav2vec2-large-robust-12-ft-emotion-msp-dim/pytorch_model.bin"
+    "./emotional/clap-htsat-fused/pytorch_model.bin"
 ]
 
 train_base_model_paths = ["D_0.pth", "G_0.pth", "DUR_0.pth"]
@@ -155,12 +156,12 @@ def modify_data_path(data_path):
     )
 
 
-def modify_preprocess_param(trans_path, cfg_path, val_per_spk, max_val_total):
+def modify_preprocess_param(trans_path, cfg_path, val_per_lang, max_val_total):
     yml = load_yaml_data_in_fact()
     data_path = yml["dataset_path"]
     yml["preprocess_text"]["transcription_path"] = trans_path
     yml["preprocess_text"]["config_path"] = cfg_path
-    yml["preprocess_text"]["val_per_spk"] = val_per_spk
+    yml["preprocess_text"]["val_per_lang"] = val_per_lang
     yml["preprocess_text"]["max_val_total"] = max_val_total
     write_yaml_data_in_fact(yml)
     whole_path = os.path.join(data_path, cfg_path).replace("\\", "/")
@@ -497,6 +498,34 @@ def do_emo_gen():
     return gr.Textbox(value=msg)
 
 
+def do_clap_gen():
+    yml = load_yaml_data_in_fact()
+    data_path = yml["dataset_path"]
+    train_list_path = yml["preprocess_text"]["train_path"]
+    val_list_path = yml["preprocess_text"]["val_path"]
+    comp_t_path = os.path.join(os.path.abspath(data_path), train_list_path).replace(
+        "\\", "/"
+    )
+    comp_v_path = os.path.join(os.path.abspath(data_path), val_list_path).replace(
+        "\\", "/"
+    )
+    msg = f"确保生成了train.list和val.list在对应目录下(由.list通过预处理得到)"
+    logger.warning(msg)
+    msg = f"train: {comp_t_path}"
+    logger.warning(msg)
+    msg = f"val: {comp_v_path}"
+    logger.warning(msg)
+
+    if os.path.exists(comp_t_path) and os.path.isfile(comp_t_path):
+        subprocess.Popen("python clap_gen.py", shell=True)
+        msg = "clap文件生成完成!"
+        logger.info(msg)
+    else:
+        msg = f"未找到训练集和验证集文本!\ntrain: {comp_t_path}\nval:{comp_v_path}"
+        logger.error(msg)
+    return gr.Textbox(value=msg)
+
+
 def do_my_train():
     yml = load_yaml_data_in_fact()
     n_gpus = torch.cuda.device_count()
@@ -640,6 +669,44 @@ def stop_webui_infer():
     return gr.Textbox(value=msg)
 
 
+def get_dataset_folders() -> str:
+    os.makedirs('Data', exist_ok=True)
+    glob_list = glob.glob('Data/**/', recursive=False)
+    glob_str = '{' + ",".join(glob_list).replace('\\', '/') + '}'
+    logger.info(glob_str)
+    return glob_str
+
+
+def do_all_process(selected_folders):
+    msg = "\n".join(selected_folders)
+    logger.info(msg)
+    return gr.Textbox(value=msg)
+
+
+def update_dataset_folders():
+    return gr.FileExplorer(glob=get_dataset_folders())
+
+
+def fn_create_folder(folder_name):
+    new_path = os.path.join(init_yml['dataset_path'], folder_name)
+    os.makedirs(os.path.join(new_path, "audios/raw"), exist_ok=True)
+    os.makedirs(os.path.join(new_path, "filelists"), exist_ok=True)
+    os.makedirs(os.path.join(new_path, "models"), exist_ok=True)
+    msg = "创建了新的文件夹: " + new_path
+    return gr.Textbox(value=msg), update_dataset_folders()
+
+
+def fn_delete_folder(selected_folders):
+    for path in selected_folders:
+        try:
+            shutil.rmtree(path)
+        except Exception as e:
+            logger.error("删除文件夹发生错误：" + str(e))
+    msg = "删除了以下文件夹及其子目录\n" + "\n".join(selected_folders)
+    logger.info(msg)
+    return gr.Textbox(value=msg), update_dataset_folders()
+
+
 if __name__ == "__main__":
     init_yml = load_yaml_data_in_fact()
     with gr.Blocks(
@@ -680,7 +747,7 @@ if __name__ == "__main__":
                     with gr.Row():
                         gr.Markdown(
                             """
-                        ### 为了后续步骤中能够方便地自动下载模型，强烈推荐完成这一步骤!
+                        ### 为了后续步骤中能够方便地自动下载模型(bert/emo_gen阶段)，强烈推荐完成这一步骤!
                         ### 去openi官网注册并登录后:
                         ### [点击此处跳转到openi官网](https://openi.pcl.ac.cn/)
                         ### , 点击右上角`个人头像`-> `设置` -> `应用`, 生成令牌(token)
@@ -835,12 +902,12 @@ if __name__ == "__main__":
                         with gr.TabItem("3. 文本预处理"):
                             with gr.Row():
                                 slider_val_per_spk = gr.Slider(
-                                    label="每个speaker的验证集条数",
-                                    info="TensorBoard里的eval音频展示条目",
+                                    label="每种语言的验证集条数",
+                                    info="TensorBoard里的每种语言eval音频展示条目",
                                     minimum=1,
                                     maximum=20,
                                     step=1,
-                                    value=init_yml["preprocess_text"]["val_per_spk"],
+                                    value=init_yml["preprocess_text"]["val_per_lang"],
                                 )
                                 slider_max_val_total = gr.Slider(
                                     label="验证集最大条数",
@@ -922,38 +989,40 @@ if __name__ == "__main__":
                                 )
                             with gr.Row():
                                 bert_status = gr.Textbox(label="状态信息")
-                        with gr.TabItem("5. emo_gen"):
+
+                        with gr.TabItem("5. clap_gen"):
                             with gr.Row():
-                                emo_config_box = gr.Textbox(
-                                    label="emo_gen配置文件路径",
-                                    info="找一找你的config.json路径,相对于数据集路径",
-                                    value=init_yml["emo_gen"]["config_path"],
-                                    lines=1,
-                                    interactive=True,
-                                    scale=10,
-                                )
+                                gr.Markdown("""
+                                   ###  和第4步差不多，点就完了
+                                   ###  作用：提取情绪特征，生成`.emo.npy`文件训练使用
+                                """)
                             with gr.Row():
-                                slider_emo_nps = gr.Slider(
-                                    label="emo_gen并行处理数",
-                                    info="最好预留2个以上的核数空闲，防卡死",
+                                slider_clap_nps = gr.Slider(
+                                    label="clap_gen并行处理数",
                                     minimum=1,
-                                    maximum=32,
+                                    maximum=12,
                                     step=1,
                                     value=init_yml["emo_gen"]["num_processes"],
                                 )
-                                dropdown_emo_device = gr.Dropdown(
-                                    label="emo_gen使用设备",
-                                    info="可选cpu或cuda",
-                                    choices=["cpu", "cuda"],
-                                    value="cuda",
+                                dropdown_clap_dev = gr.Dropdown(
+                                    label="clap_gen处理设备",
+                                    choices=["cuda", "cpu"],
+                                    value=init_yml["emo_gen"]["device"],
+                                )
+                                clap_config_box = gr.Textbox(
+                                    label="clap_gen配置文件路径",
+                                    value=init_yml["emo_gen"]["config_path"]
                                 )
                             with gr.Row():
-                                emo_config_btn = gr.Button(value="更新emo配置")
-                                emo_gen_btn = gr.Button(
-                                    value="Emo Gen!", variant="primary"
+                                clap_conf_btn = gr.Button(
+                                    value="确认更改clap配置",
+                                    variant="secondary"
+                                )
+                                clap_gen_btn = gr.Button(
+                                    value="Clap Gen!", variant="primary"
                                 )
                             with gr.Row():
-                                emo_status = gr.Textbox(label="状态信息")
+                                clap_status = gr.Textbox(label="状态信息")
 
                 with gr.TabItem("训练界面"):
                     with gr.Tabs():
@@ -1058,8 +1127,8 @@ if __name__ == "__main__":
                                 dropdown_version = gr.Dropdown(
                                     label="模型版本选择",
                                     info="推荐使用最新版底模和版本训练",
-                                    choices=["2.1", "2.0.2", "2.0.1", "2.0", "1.1.1", "1.1.0", "1.0.1"],
-                                    value="2.1",
+                                    choices=["2.2", "2.1", "2.0.2", "2.0.1", "2.0", "1.1.1", "1.1.0", "1.0.1"],
+                                    value="2.2",
                                 )
                             with gr.Row():
                                 train_ms_load_btn = gr.Button(
@@ -1177,6 +1246,38 @@ if __name__ == "__main__":
                                 )
                             with gr.Row():
                                 compress_status = gr.Textbox(label="状态信息")
+
+                with gr.TabItem("一键训练(前瞻试验版本)"):
+                    with gr.Row():
+                        gr.Markdown("""
+                            ### 把所有的音频放入到Data下的每个文件夹的audios/raw中
+                            ### 这里只展示了Data下的子一级文件夹，方便选择数据集
+                            ### - 创建文件夹指的是会把所需的文件夹下所有子目录都建立好
+                            ### - 目前创建与删除重启之后才能生效
+                        """)
+                    with gr.Row():
+                        selected_folders = gr.FileExplorer(
+                            label="选择数据集文件夹",
+                            glob=get_dataset_folders(),
+                            height=150,
+                            root=".",
+                            file_count="multiple"
+                        )
+                    with gr.Row():
+                        create_folder_box = gr.Textbox(label="输入要创建的文件夹名称",
+                                                       placeholder="可以含有中文，但不要有空格或特殊符号")
+                        final_folder_box = gr.Textbox(label="输入最终输出的文件夹名称",
+                                                      placeholder="可以含有中文，但不要有空格或特殊符号")
+                    with gr.Row():
+                        create_folder_btn = gr.Button(variant="primary", value="点击创建所需文件夹")
+                        delete_folder_btn = gr.Button(variant="stop", value="点击删除选定文件夹")
+                    with gr.Row():
+                        all_process_btn = gr.Button(
+                            value="开始一键训练",
+                            variant="primary"
+                        )
+                    with gr.Row():
+                        all_process_status = gr.Textbox(label="状态信息")
             with gr.Tabs():
                 with gr.TabItem("yaml配置文件状态"):
                     code_config_yml = gr.Code(
@@ -1305,12 +1406,7 @@ if __name__ == "__main__":
             ],
         )
         bert_gen_btn.click(fn=do_bert_gen, inputs=[], outputs=[bert_status])
-        emo_config_btn.click(
-            fn=modify_emo_gen,
-            inputs=[emo_config_box, slider_emo_nps, dropdown_emo_device],
-            outputs=[emo_status, code_config_yml],
-        )
-        emo_gen_btn.click(fn=do_emo_gen, inputs=[], outputs=[emo_status])
+
         train_ms_load_btn.click(
             fn=load_train_param,
             inputs=[train_config_box],
@@ -1379,6 +1475,18 @@ if __name__ == "__main__":
         )
         stop_infer_btn.click(fn=stop_webui_infer, inputs=[], outputs=[infer_webui_box])
         gpu_json_btn.click(fn=get_gpu_status, inputs=[], outputs=[code_gpu_json])
+        clap_gen_btn.click(fn=do_clap_gen, inputs=[], outputs=[clap_status])
+        clap_conf_btn.click(fn=modify_emo_gen, inputs=[clap_config_box, slider_clap_nps, dropdown_clap_dev],
+                            outputs=[clap_status, code_config_yml])
+        # selected_folders.change(fn=update_dataset_folders, inputs=[], outputs=[selected_folders])
+        all_process_btn.click(fn=do_all_process,
+                              inputs=[selected_folders],
+                              outputs=[all_process_status])
+        create_folder_btn.click(fn=fn_create_folder, inputs=[create_folder_box],
+                                outputs=[all_process_status, selected_folders])
+        delete_folder_btn.click(fn=fn_delete_folder, inputs=[selected_folders],
+                                outputs=[all_process_status, selected_folders])
+
     os.environ["no_proxy"] = "localhost,127.0.0.1,0.0.0.0"
-    webbrowser.open("http://127.0.0.1:6006")
-    app.launch(share=False, server_port=6006)
+    webbrowser.open("http://127.0.0.1:6007")
+    app.launch(share=False, server_port=6007)

@@ -1,10 +1,12 @@
+import os
 from collections import OrderedDict
-from text.symbols import symbols
+
 import torch
-from tools.log import logger
+
 import utils
 from models import SynthesizerTrn
-import os
+from text.symbols import symbols
+from tools.log import logger
 
 
 def copyStateDict(state_dict):

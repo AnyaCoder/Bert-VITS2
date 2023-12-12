@@ -1,11 +1,11 @@
 import argparse
 import os
 
-from loguru import logger
+from tools.log import logger
 
 
 def extract_list(folder_path, language, name, transcript_txt_file):
-    logger.info(f"extracting list: {folder_path}|{name}|{language}")
+    logger.info(f"正在提取文本: {folder_path}|{name}|{language}")
     current_dir = os.getcwd()
     relative_path = os.path.relpath(folder_path, current_dir)
     print(relative_path)
@@ -33,7 +33,7 @@ def extract_list(folder_path, language, name, transcript_txt_file):
                         line = f"{wav_file_path}|{name}|{language}|{transcription}\n"
                         f.write(line)
                     else:
-                        print("not exists!")
+                        print("不存在对应音频!")
     return f"转写文本 {transcript_txt_file} 生成完成"
 
 

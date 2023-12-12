@@ -1,7 +1,9 @@
 # flake8: noqa: E402
-import os
 import logging
+import os
+
 import re_matching
+import tools.log
 from tools.sentence import split_by_language
 
 logging.getLogger("numba").setLevel(logging.WARNING)
@@ -200,16 +202,26 @@ def tts_split(
 
 
 def tts_fn(
-    text: str,
-    speaker,
-    sdp_ratio,
-    noise_scale,
-    noise_scale_w,
-    length_scale,
-    language,
-    reference_audio,
-    emotion,
+        text: str,
+        speaker,
+        sdp_ratio,
+        noise_scale,
+        noise_scale_w,
+        length_scale,
+        language,
+        reference_audio,
+        emotion,
+        prompt_mode,
 ):
+    if prompt_mode == "Audio prompt":
+        if reference_audio == None:
+            return ("Invalid audio prompt", None)
+        else:
+            reference_audio = load_audio(reference_audio)[1]
+    else:
+        tools.log.logger.info("text: " + text + ", speaker: " + speaker + ", language: " + language + \
+                              ", emotion: " + emotion)
+        reference_audio = None
     audio_list = []
     if language == "mix":
         bool_valid, str_valid = re_matching.validate_text(text)
@@ -351,6 +363,25 @@ def tts_fn(
     return "Success", (hps.data.sampling_rate, audio_concat)
 
 
+def load_audio(path):
+    audio, sr = librosa.load(path, 48000)
+    # audio = librosa.resample(audio, 44100, 48000)
+    return sr, audio
+
+
+def gr_util(item):
+    if item == "Text prompt":
+        return {"visible": True, "__type__": "update"}, {
+            "visible": False,
+            "__type__": "update",
+        }
+    else:
+        return {"visible": False, "__type__": "update"}, {
+            "visible": True,
+            "__type__": "update",
+        }
+
+
 if __name__ == "__main__":
     if config.webui_config.debug:
         logger.info("Enable DEBUG-LEVEL log")
@@ -384,8 +415,25 @@ if __name__ == "__main__":
                 speaker = gr.Dropdown(
                     choices=speakers, value=speakers[0], label="Speaker"
                 )
-                emotion = gr.Slider(
-                    minimum=0, maximum=9, value=0, step=1, label="Emotion"
+                _ = gr.Markdown(
+                    value="提示模式（Prompt mode）：可选文字提示或音频提示，用于生成文字或音频指定风格的声音。\n"
+                )
+                prompt_mode = gr.Radio(
+                    ["Text prompt", "Audio prompt"],
+                    label="Prompt Mode",
+                    value="Text prompt",
+                )
+                text_prompt = gr.Dropdown(
+                    label="Text prompt",
+                    placeholder="可选。若需要自定义提示词，必须用英文单词描述生成风格。如：Happy",
+                    value="Happy voice.",
+                    visible=True,
+                    allow_custom_value=True,
+                    choices=["开心", "伤心", "愤怒", "恐惧", "平静", "低语"],
+                    max_choices=1,
+                )
+                audio_prompt = gr.Audio(
+                    label="Audio prompt", type="filepath", visible=False
                 )
                 sdp_ratio = gr.Slider(
                     minimum=0, maximum=1, value=0.2, step=0.1, label="SDP Ratio"
@@ -433,8 +481,6 @@ if __name__ == "__main__":
                 #     show_download_button=False,
                 #     value=os.path.abspath("./img/参数说明.png"),
                 # )
-                reference_text = gr.Markdown(value="## 情感参考音频（WAV 格式）：用于生成语音的情感参考。")
-                reference_audio = gr.Audio(label="情感参考音频（WAV 格式）", type="filepath")
         btn.click(
             tts_fn,
             inputs=[
@@ -445,8 +491,9 @@ if __name__ == "__main__":
                 noise_scale_w,
                 length_scale,
                 language,
-                reference_audio,
-                emotion,
+                audio_prompt,
+                text_prompt,
+                prompt_mode,
             ],
             outputs=[text_output, audio_output],
         )
@@ -469,17 +516,24 @@ if __name__ == "__main__":
                 opt_cut_by_sent,
                 interval_between_para,
                 interval_between_sent,
-                reference_audio,
-                emotion,
+                audio_prompt,
+                text_prompt,
             ],
             outputs=[text_output, audio_output],
         )
 
-        reference_audio.upload(
-            lambda x: librosa.load(x, 16000)[::-1],
-            inputs=[reference_audio],
-            outputs=[reference_audio],
+        prompt_mode.change(
+            lambda x: gr_util(x),
+            inputs=[prompt_mode],
+            outputs=[text_prompt, audio_prompt],
         )
+
+        audio_prompt.upload(
+            lambda x: load_audio(x),
+            inputs=[audio_prompt],
+            outputs=[audio_prompt],
+        )
+
     print("推理页面已开启!")
     webbrowser.open(f"http://127.0.0.1:{config.webui_config.port}")
     app.launch(share=config.webui_config.share, server_port=config.webui_config.port)

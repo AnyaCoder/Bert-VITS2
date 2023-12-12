@@ -1,14 +1,15 @@
 import json
+import os
 from collections import defaultdict
 from random import shuffle
 from typing import Optional
-import os
 
-from tqdm import tqdm
 import click
-from text.cleaner import clean_text
+from tqdm import tqdm
+
 from config import config
 from infer import latest_version
+from text.cleaner import clean_text
 
 preprocess_text_config = config.preprocess_text_config
 
@@ -27,20 +28,20 @@ preprocess_text_config = config.preprocess_text_config
     default=preprocess_text_config.config_path,
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
 )
-@click.option("--val-per-spk", default=preprocess_text_config.val_per_spk)
+@click.option("--val-per-lang", default=preprocess_text_config.val_per_lang)
 @click.option("--max-val-total", default=preprocess_text_config.max_val_total)
 @click.option("--clean/--no-clean", default=preprocess_text_config.clean)
 @click.option("-y", "--yml_config")
 def preprocess(
-    transcription_path: str,
-    cleaned_path: Optional[str],
-    train_path: str,
-    val_path: str,
-    config_path: str,
-    val_per_spk: int,
-    max_val_total: int,
-    clean: bool,
-    yml_config: str,  # 这个不要删
+        transcription_path: str,
+        cleaned_path: Optional[str],
+        train_path: str,
+        val_path: str,
+        config_path: str,
+        val_per_lang: int,
+        max_val_total: int,
+        clean: bool,
+        yml_config: str,  # 这个不要删
 ):
     if cleaned_path == "" or cleaned_path is None:
         cleaned_path = transcription_path + ".cleaned"
@@ -94,8 +95,7 @@ def preprocess(
                 countNotFound += 1
                 continue
             audioPaths.add(utt)
-            spk_utt_map[spk].append(line)
-
+            spk_utt_map[language].append(line)
             if spk not in spk_id_map.keys():
                 spk_id_map[spk] = current_sid
                 current_sid += 1
@@ -106,9 +106,10 @@ def preprocess(
 
     for spk, utts in spk_utt_map.items():
         shuffle(utts)
-        val_list += utts[:val_per_spk]
-        train_list += utts[val_per_spk:]
+        val_list += utts[:val_per_lang]
+        train_list += utts[val_per_lang:]
 
+    shuffle(val_list)
     if len(val_list) > max_val_total:
         train_list += val_list[max_val_total:]
         val_list = val_list[:max_val_total]

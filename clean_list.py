@@ -2,14 +2,13 @@ import argparse
 import shutil
 from tempfile import NamedTemporaryFile
 
-from loguru import logger
+from tools.log import logger
 
 
 def remove_chars_from_file(chars_to_remove, input_file, output_file):
     rm_cnt = 0
-    with open(input_file, "r", encoding="utf-8") as f_in, NamedTemporaryFile(
-            "w", delete=False, encoding="utf-8"
-    ) as f_tmp:
+    with open(input_file, "r", encoding="utf-8") as f_in, \
+            NamedTemporaryFile("w", delete=False, encoding="utf-8") as f_tmp:
         for line in f_in:
             if any(char in line for char in chars_to_remove):
                 logger.info(f"删除了这一行:\n {line.strip()}")

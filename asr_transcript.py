@@ -2,10 +2,11 @@ import argparse
 import concurrent.futures
 import os
 
-from loguru import logger
 from modelscope.pipelines import pipeline
 from modelscope.utils.constant import Tasks
 from tqdm import tqdm
+
+from tools.log import logger
 
 os.environ["MODELSCOPE_CACHE"] = "./"
 
@@ -14,6 +15,13 @@ def transcribe_worker(file_path: str, inference_pipeline, language):
     """
     Worker function for transcribing a segment of an audio file.
     """
+    lab_path = os.path.splitext(file_path)[0] + '.lab'
+    if os.path.exists(lab_path) and os.path.isfile(lab_path):
+        logger.info(f'{lab_path}为已转写的文本，跳过~')
+        with open(lab_path, 'r', encoding='utf-8') as f:
+            text = f.read()
+        return text
+
     rec_result = inference_pipeline(audio_in=file_path)
     text = str(rec_result.get("text", "")).strip()
     text_without_spaces = text.replace(" ", "")
@@ -30,7 +38,7 @@ def transcribe_folder_parallel(folder_path, language, max_workers=4):
     """
     Transcribe all .wav files in the given folder using ThreadPoolExecutor.
     """
-    logger.critical(f"parallel transcribe: {folder_path}|{language}|{max_workers}")
+    logger.info(f"parallel transcribe: {folder_path}|{language}|{max_workers}")
     if language == "JP":
         workers = [
             pipeline(
@@ -64,7 +72,6 @@ def transcribe_folder_parallel(folder_path, language, max_workers=4):
         for file in files:
             if file.lower().endswith(".wav"):
                 file_path = os.path.join(root, file)
-                lab_file_path = os.path.splitext(file_path)[0] + ".lab"
                 file_paths.append(file_path)
                 langs.append(language)
 
@@ -86,7 +93,7 @@ def transcribe_folder_parallel(folder_path, language, max_workers=4):
                     lab_file_path = os.path.splitext(file_path)[0] + ".lab"
                     with open(lab_file_path, "w", encoding="utf-8") as lab_file:
                         lab_file.write(transcription)
-    logger.critical("已经将wav文件转写为同名的.lab文件")
+    logger.info("已经将wav文件转写为同名的.lab文件")
 
 
 if __name__ == "__main__":
