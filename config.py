@@ -2,12 +2,11 @@
 @Desc: 全局配置文件读取
 """
 import argparse
+import yaml
+from typing import Dict, List
 import os
 import shutil
 import sys
-from typing import Dict, List
-
-import yaml
 
 
 class Resample_config:
@@ -33,15 +32,15 @@ class Preprocess_text_config:
     """数据预处理配置"""
 
     def __init__(
-            self,
-            transcription_path: str,
-            cleaned_path: str,
-            train_path: str,
-            val_path: str,
-            config_path: str,
-            val_per_lang: int = 5,
-            max_val_total: int = 10000,
-            clean: bool = True,
+        self,
+        transcription_path: str,
+        cleaned_path: str,
+        train_path: str,
+        val_path: str,
+        config_path: str,
+        val_per_lang: int = 5,
+        max_val_total: int = 10000,
+        clean: bool = True,
     ):
         self.transcription_path: str = transcription_path  # 原始文本文件路径，文本格式应为{wav_path}|{speaker_name}|{language}|{text}。
         self.cleaned_path: str = cleaned_path  # 数据清洗后文本路径，可以不填。不填则将在原始文本目录生成
@@ -96,11 +95,11 @@ class Emo_gen_config:
     """emo_gen 配置"""
 
     def __init__(
-            self,
-            config_path: str,
-            num_processes: int = 2,
-            device: str = "cuda",
-            use_multi_device: bool = False,
+        self,
+        config_path: str,
+        num_processes: int = 2,
+        device: str = "cuda",
+        use_multi_device: bool = False,
     ):
         self.config_path = config_path
         self.num_processes = num_processes

@@ -1,15 +1,14 @@
 import json
-import os
 from collections import defaultdict
 from random import shuffle
 from typing import Optional
+import os
 
-import click
 from tqdm import tqdm
-
+import click
+from text.cleaner import clean_text
 from config import config
 from infer import latest_version
-from text.cleaner import clean_text
 
 preprocess_text_config = config.preprocess_text_config
 
@@ -33,15 +32,15 @@ preprocess_text_config = config.preprocess_text_config
 @click.option("--clean/--no-clean", default=preprocess_text_config.clean)
 @click.option("-y", "--yml_config")
 def preprocess(
-        transcription_path: str,
-        cleaned_path: Optional[str],
-        train_path: str,
-        val_path: str,
-        config_path: str,
-        val_per_lang: int,
-        max_val_total: int,
-        clean: bool,
-        yml_config: str,  # 这个不要删
+    transcription_path: str,
+    cleaned_path: Optional[str],
+    train_path: str,
+    val_path: str,
+    config_path: str,
+    val_per_lang: int,
+    max_val_total: int,
+    clean: bool,
+    yml_config: str,  # 这个不要删
 ):
     if cleaned_path == "" or cleaned_path is None:
         cleaned_path = transcription_path + ".cleaned"

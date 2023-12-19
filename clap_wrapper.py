@@ -11,9 +11,9 @@ processor = ClapProcessor.from_pretrained("./emotional/clap-htsat-fused")
 
 def get_clap_audio_feature(audio_data, device=config.bert_gen_config.device):
     if (
-            sys.platform == "darwin"
-            and torch.backends.mps.is_available()
-            and device == "cpu"
+        sys.platform == "darwin"
+        and torch.backends.mps.is_available()
+        and device == "cpu"
     ):
         device = "mps"
     if not device:
@@ -32,9 +32,9 @@ def get_clap_audio_feature(audio_data, device=config.bert_gen_config.device):
 
 def get_clap_text_feature(text, device=config.bert_gen_config.device):
     if (
-            sys.platform == "darwin"
-            and torch.backends.mps.is_available()
-            and device == "cpu"
+        sys.platform == "darwin"
+        and torch.backends.mps.is_available()
+        and device == "cpu"
     ):
         device = "mps"
     if not device:

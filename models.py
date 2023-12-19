@@ -1,22 +1,23 @@
 import math
-
 import torch
 from torch import nn
-from torch.nn import Conv1d, ConvTranspose1d, Conv2d
 from torch.nn import functional as F
-from torch.nn.utils import weight_norm, remove_weight_norm, spectral_norm
 
-import attentions
 import commons
 import modules
+import attentions
 import monotonic_align
+
+from torch.nn import Conv1d, ConvTranspose1d, Conv2d
+from torch.nn.utils import weight_norm, remove_weight_norm, spectral_norm
+
 from commons import init_weights, get_padding
 from text import symbols, num_tones, num_languages
 
 
 class DurationDiscriminator(nn.Module):  # vits2
     def __init__(
-            self, in_channels, filter_channels, kernel_size, p_dropout, gin_channels=0
+        self, in_channels, filter_channels, kernel_size, p_dropout, gin_channels=0
     ):
         super().__init__()
 
@@ -364,14 +365,14 @@ class TextEncoder(nn.Module):
         en_bert_emb = self.en_bert_proj(en_bert).transpose(1, 2)
         emo_emb = self.emo_proj(emo.unsqueeze(1))
         x = (
-                    self.emb(x)
-                    + self.tone_emb(tone)
-                    + self.language_emb(language)
-                    + bert_emb
-                    + ja_bert_emb
-                    + en_bert_emb
-                    + emo_emb
-            ) * math.sqrt(
+            self.emb(x)
+            + self.tone_emb(tone)
+            + self.language_emb(language)
+            + bert_emb
+            + ja_bert_emb
+            + en_bert_emb
+            + emo_emb
+        ) * math.sqrt(
             self.hidden_channels
         )  # [b, t, h]
         x = torch.transpose(x, 1, -1)  # [b, h, t]

@@ -1,16 +1,15 @@
 import os
 import random
-
 import torch
 import torch.utils.data
 from tqdm import tqdm
-
-import commons
-from config import config
-from mel_processing import spectrogram_torch, mel_spectrogram_torch
-from text import cleaned_text_to_sequence
+import numpy as np
 from tools.log import logger
+import commons
+from mel_processing import spectrogram_torch, mel_spectrogram_torch
 from utils import load_wav_to_torch, load_filepaths_and_text
+from text import cleaned_text_to_sequence
+from config import config
 
 """Multi speaker version"""
 

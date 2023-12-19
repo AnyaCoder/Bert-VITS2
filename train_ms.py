@@ -1,20 +1,18 @@
 # flake8: noqa: E402
-import argparse
-import datetime
-import logging
-import os
 import platform
-
+import os
 import torch
-import torch.distributed as dist
-from torch.cuda.amp import autocast, GradScaler
 from torch.nn import functional as F
-from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.cuda.amp import autocast, GradScaler
 from tqdm import tqdm
-
+import logging
 from config import config
+import argparse
+import datetime
 
 logging.getLogger("numba").setLevel(logging.WARNING)
 import commons
@@ -377,24 +375,24 @@ def train_and_evaluate(
     if net_dur_disc is not None:
         net_dur_disc.train()
     for batch_idx, (
-            x,
-            x_lengths,
-            spec,
-            spec_lengths,
-            y,
-            y_lengths,
-            speakers,
-            tone,
-            language,
-            bert,
-            ja_bert,
-            en_bert,
-            emo,
+        x,
+        x_lengths,
+        spec,
+        spec_lengths,
+        y,
+        y_lengths,
+        speakers,
+        tone,
+        language,
+        bert,
+        ja_bert,
+        en_bert,
+        emo,
     ) in enumerate(tqdm(train_loader)):
         if net_g.module.use_noise_scaled_mas:
             current_mas_noise_scale = (
-                    net_g.module.mas_noise_scale_initial
-                    - net_g.module.noise_scale_delta * global_step
+                net_g.module.mas_noise_scale_initial
+                - net_g.module.noise_scale_delta * global_step
             )
             net_g.module.current_mas_noise_scale = max(current_mas_noise_scale, 0.0)
         x, x_lengths = x.cuda(local_rank, non_blocking=True), x_lengths.cuda(

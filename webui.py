@@ -1,11 +1,20 @@
 # flake8: noqa: E402
-import logging
 import os
-
+import logging
 import re_matching
-import tools.log
 from tools.sentence import split_by_language
+import shutil
+import tools.log
+# check
+if os.path.exists("nltk_data") and os.path.isdir("nltk_data"):
+    if not os.path.exists("/root/nltk_data"):
+        shutil.copytree("nltk_data", "/root/nltk_data")
 
+jp_dict = "open_jtalk_dic_utf_8-1.11.tar.gz"
+if os.path.exists(jp_dict) and os.path.isfile(jp_dict):
+    if not os.path.exists("/root/" + jp_dict):
+        shutil.copy(jp_dict, "/root/")
+# ----
 logging.getLogger("numba").setLevel(logging.WARNING)
 logging.getLogger("markdown_it").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -202,16 +211,16 @@ def tts_split(
 
 
 def tts_fn(
-        text: str,
-        speaker,
-        sdp_ratio,
-        noise_scale,
-        noise_scale_w,
-        length_scale,
-        language,
-        reference_audio,
-        emotion,
-        prompt_mode,
+    text: str,
+    speaker,
+    sdp_ratio,
+    noise_scale,
+    noise_scale_w,
+    length_scale,
+    language,
+    reference_audio,
+    emotion,
+    prompt_mode,
 ):
     if prompt_mode == "Audio prompt":
         if reference_audio == None:

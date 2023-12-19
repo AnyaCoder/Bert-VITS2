@@ -1,9 +1,8 @@
-import json
-import os
-
-import utils
 from models_onnx import SynthesizerTrn
+import utils
 from text.symbols import symbols
+import os
+import json
 
 
 def export_onnx(export_path, model_path, config_path):

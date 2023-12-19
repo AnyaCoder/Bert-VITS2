@@ -7,27 +7,29 @@
     1.1.1-fix： 1.1.1版本训练的模型，但是在推理时使用dev的日语修复
     2.2：当前版本
 """
-import numpy as np
 import torch
-
 import commons
-import utils
+from text import cleaned_text_to_sequence, get_bert
 from clap_wrapper import get_clap_audio_feature, get_clap_text_feature
+from text.cleaner import clean_text
+import utils
+import numpy as np
+
 from models import SynthesizerTrn
-from oldVersion import V111, V110, V101, V200  # , V210
-from oldVersion.V101.models import SynthesizerTrn as V101SynthesizerTrn
-from oldVersion.V101.text import symbols as V101symbols
-from oldVersion.V110.models import SynthesizerTrn as V110SynthesizerTrn
-from oldVersion.V110.text import symbols as V110symbols
-from oldVersion.V111.models import SynthesizerTrn as V111SynthesizerTrn
-from oldVersion.V111.text import symbols as V111symbols
+from text.symbols import symbols
+
 # from oldVersion.V210.models import SynthesizerTrn as V210SynthesizerTrn
 # from oldVersion.V210.text import symbols as V210symbols
 from oldVersion.V200.models import SynthesizerTrn as V200SynthesizerTrn
 from oldVersion.V200.text import symbols as V200symbols
-from text import cleaned_text_to_sequence, get_bert
-from text.cleaner import clean_text
-from text.symbols import symbols
+from oldVersion.V111.models import SynthesizerTrn as V111SynthesizerTrn
+from oldVersion.V111.text import symbols as V111symbols
+from oldVersion.V110.models import SynthesizerTrn as V110SynthesizerTrn
+from oldVersion.V110.text import symbols as V110symbols
+from oldVersion.V101.models import SynthesizerTrn as V101SynthesizerTrn
+from oldVersion.V101.text import symbols as V101symbols
+
+from oldVersion import V111, V110, V101, V200  # , V210
 
 # 当前版本信息
 latest_version = "2.2"
@@ -138,20 +140,20 @@ def get_text(text, language_str, hps, device):
 
 
 def infer(
-        text,
-        emotion,
-        sdp_ratio,
-        noise_scale,
-        noise_scale_w,
-        length_scale,
-        sid,
-        language,
-        hps,
-        net_g,
-        device,
-        reference_audio=None,
-        skip_start=False,
-        skip_end=False,
+    text,
+    emotion,
+    sdp_ratio,
+    noise_scale,
+    noise_scale_w,
+    length_scale,
+    sid,
+    language,
+    hps,
+    net_g,
+    device,
+    reference_audio=None,
+    skip_start=False,
+    skip_end=False,
 ):
     # 2.2版本参数位置变了
     # 2.1 参数新增 emotion reference_audio skip_start skip_end

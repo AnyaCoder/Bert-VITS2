@@ -1,10 +1,9 @@
-import json
-import os
-import shutil
-import subprocess
-import webbrowser
-
 import gradio as gr
+import webbrowser
+import os
+import json
+import subprocess
+import shutil
 
 
 def get_path(data_dir):
@@ -100,41 +99,41 @@ if __name__ == "__main__":
             with gr.Column():
                 _ = gr.Markdown(
                     value="# Bert-VITS2 数据预处理\n"
-                          "## 预先准备：\n"
-                          "下载 BERT 和 CLAP 模型：\n"
-                          "- [中文 RoBERTa](https://huggingface.co/hfl/chinese-roberta-wwm-ext-large)\n"
-                          "- [日文 DeBERTa](https://huggingface.co/ku-nlp/deberta-v2-large-japanese-char-wwm)\n"
-                          "- [英文 DeBERTa](https://huggingface.co/microsoft/deberta-v3-large)\n"
-                          "- [CLAP](https://huggingface.co/laion/clap-htsat-fused)\n"
-                          "\n"
-                          "将 BERT 模型放置到 `bert` 文件夹下，CLAP 模型放置到 `emotional` 文件夹下，覆盖同名文件夹。\n"
-                          "\n"
-                          "数据准备：\n"
-                          "将数据放置在 data 文件夹下，按照如下结构组织：\n"
-                          "\n"
-                          "```\n"
-                          "├── data\n"
-                          "│   ├── {你的数据集名称}\n"
-                          "│   │   ├── esd.list\n"
-                          "│   │   ├── raw\n"
-                          "│   │   │   ├── ****.wav\n"
-                          "│   │   │   ├── ****.wav\n"
-                          "│   │   │   ├── ...\n"
-                          "```\n"
-                          "\n"
-                          "其中，`raw` 文件夹下保存所有的音频文件，`esd.list` 文件为标签文本，格式为\n"
-                          "\n"
-                          "```\n"
-                          "****.wav|{说话人名}|{语言 ID}|{标签文本}\n"
-                          "```\n"
-                          "\n"
-                          "例如：\n"
-                          "```\n"
-                          "vo_ABDLQ001_1_paimon_02.wav|派蒙|ZH|没什么没什么，只是平时他总是站在这里，有点奇怪而已。\n"
-                          "noa_501_0001.wav|NOA|JP|そうだね、油断しないのはとても大事なことだと思う\n"
-                          "Albedo_vo_ABDLQ002_4_albedo_01.wav|Albedo|EN|Who are you? Why did you alarm them?\n"
-                          "...\n"
-                          "```\n"
+                    "## 预先准备：\n"
+                    "下载 BERT 和 CLAP 模型：\n"
+                    "- [中文 RoBERTa](https://huggingface.co/hfl/chinese-roberta-wwm-ext-large)\n"
+                    "- [日文 DeBERTa](https://huggingface.co/ku-nlp/deberta-v2-large-japanese-char-wwm)\n"
+                    "- [英文 DeBERTa](https://huggingface.co/microsoft/deberta-v3-large)\n"
+                    "- [CLAP](https://huggingface.co/laion/clap-htsat-fused)\n"
+                    "\n"
+                    "将 BERT 模型放置到 `bert` 文件夹下，CLAP 模型放置到 `emotional` 文件夹下，覆盖同名文件夹。\n"
+                    "\n"
+                    "数据准备：\n"
+                    "将数据放置在 data 文件夹下，按照如下结构组织：\n"
+                    "\n"
+                    "```\n"
+                    "├── data\n"
+                    "│   ├── {你的数据集名称}\n"
+                    "│   │   ├── esd.list\n"
+                    "│   │   ├── raw\n"
+                    "│   │   │   ├── ****.wav\n"
+                    "│   │   │   ├── ****.wav\n"
+                    "│   │   │   ├── ...\n"
+                    "```\n"
+                    "\n"
+                    "其中，`raw` 文件夹下保存所有的音频文件，`esd.list` 文件为标签文本，格式为\n"
+                    "\n"
+                    "```\n"
+                    "****.wav|{说话人名}|{语言 ID}|{标签文本}\n"
+                    "```\n"
+                    "\n"
+                    "例如：\n"
+                    "```\n"
+                    "vo_ABDLQ001_1_paimon_02.wav|派蒙|ZH|没什么没什么，只是平时他总是站在这里，有点奇怪而已。\n"
+                    "noa_501_0001.wav|NOA|JP|そうだね、油断しないのはとても大事なことだと思う\n"
+                    "Albedo_vo_ABDLQ002_4_albedo_01.wav|Albedo|EN|Who are you? Why did you alarm them?\n"
+                    "...\n"
+                    "```\n"
                 )
                 data_dir = gr.Textbox(
                     label="数据集名称",
@@ -161,9 +160,9 @@ if __name__ == "__main__":
                 clap_gen_btn = gr.Button(value="执行", variant="primary")
                 _ = gr.Markdown(
                     value="## 训练模型及部署：\n"
-                          "修改根目录下的 `config.yml` 中 `dataset_path` 一项为 `data/{你的数据集名称}`\n"
-                          "- 训练：将[预训练模型文件](https://openi.pcl.ac.cn/Stardust_minus/Bert-VITS2/modelmanage/show_model)（`D_0.pth`、`DUR_0.pth` 和 `G_0.pth`）放到 `data/{你的数据集名称}/models` 文件夹下，执行 `torchrun --nproc_per_node=1 train_ms.py` 命令（多卡运行可参考 `run_MnodesAndMgpus.sh` 中的命令。\n"
-                          "- 部署：修改根目录下的 `config.yml` 中 `webui` 下 `model` 一项为 `models/{权重文件名}.pth` （如 G_10000.pth），然后执行 `python webui.py`"
+                    "修改根目录下的 `config.yml` 中 `dataset_path` 一项为 `data/{你的数据集名称}`\n"
+                    "- 训练：将[预训练模型文件](https://openi.pcl.ac.cn/Stardust_minus/Bert-VITS2/modelmanage/show_model)（`D_0.pth`、`DUR_0.pth` 和 `G_0.pth`）放到 `data/{你的数据集名称}/models` 文件夹下，执行 `torchrun --nproc_per_node=1 train_ms.py` 命令（多卡运行可参考 `run_MnodesAndMgpus.sh` 中的命令。\n"
+                    "- 部署：修改根目录下的 `config.yml` 中 `webui` 下 `model` 一项为 `models/{权重文件名}.pth` （如 G_10000.pth），然后执行 `python webui.py`"
                 )
 
         generate_config_btn.click(
